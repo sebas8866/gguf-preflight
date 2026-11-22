@@ -1,0 +1,26 @@
+{
+ "id": "msg_c242fd35eedcbae5dd8c7360",
+ "type": "message",
+ "role": "assistant",
+ "model": "qwen3:8b",
+ "content": [
+  {
+   "type": "thinking",
+   "thinking": "Okay, the user is asking for the weather"
+  },
+  {
+   "type": "tool_use",
+   "id": "call_rlm5muog",
+   "name": "get_weather",
+   "input": {
+    "city": "Paris"
+   }
+  }
+ ],
+ "stop_reason": "tool_use",
+ "usage": {
+  "input_tokens": 1,
+  "cache_read_input_tokens": 148,
+  "output_tokens": 110
+ }
+}

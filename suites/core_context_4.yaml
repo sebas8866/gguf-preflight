@@ -1,0 +1,43 @@
+id: core_context_4
+kind: context
+version: 1
+description: Four-turn tasks that check whether turn 1 still controls turn 4.
+max_tokens: 96
+warn_below: 0.75
+fail_below: 0.5
+system: You are a concise assistant. Follow every standing instruction for the whole conversation.
+tasks:
+  - id: context_01_format_rule
+    turns:
+      - For this whole conversation, end every reply with the exact marker [DONE-7].
+      - What is the capital of France? Answer in one word.
+      - What is 6 times 7? Answer with the number.
+      - Name one primary color.
+    must_match: '\[DONE-7\]\s*$'
+
+  - id: context_02_remembered_value
+    turns:
+      - Remember this deployment setting. The target region is eu-west-3. Reply only with OK.
+      - What file extension do Python source files use?
+      - What does HTTP status 404 mean? Answer in three words or fewer.
+      - Which target region did I give you? Reply with the region only.
+    must_match: '(?i)\beu-west-3\b'
+
+  - id: context_03_prohibition
+    turns:
+      - >-
+        Project rule for this conversation. We only use the httpx library for HTTP in Python.
+        We never use requests. Reply only with OK.
+      - What keyword starts a Python loop over a list?
+      - What does JSON stand for?
+      - Which Python library should I use to make an HTTP call in this project? Answer in one word.
+    must_match: '(?i)\bhttpx\b'
+    must_not_match: '(?i)\brequests\b'
+
+  - id: context_04_state_tracking
+    turns:
+      - The counter starts at 100. Reply only with OK.
+      - Add 25 to the counter. Reply with the new value only.
+      - Subtract 40 from the counter. Reply with the new value only.
+      - What is the counter now? Reply with the number only.
+    must_match: '(?<!\d)85(?!\d)'

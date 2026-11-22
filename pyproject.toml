@@ -1,0 +1,65 @@
+[project]
+name = "gguf-preflight"
+version = "0.1.0"
+description = "Deterministic preflight checks for local GGUF inference stacks before you connect an AI coding agent."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "sebas8866" }]
+requires-python = ">=3.12"
+keywords = ["gguf", "llama.cpp", "ollama", "lm-studio", "mcp", "local-llm", "ai-agents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Testing",
+    "Typing :: Typed",
+]
+dependencies = [
+    "fastmcp>=4.2.4",
+    "httpx>=0.28.1",
+    "pydantic>=2.0",
+    "pyyaml>=6.0.4",
+    "rich>=15.0.0",
+    "typer>=0.29.2",
+]
+
+[project.urls]
+Repository = "https://github.com/sebas8866/gguf-preflight"
+
+[project.scripts]
+gguf-preflight = "gguf_preflight.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gguf_preflight"]
+
+# suites/ lives at the repo root but must ship inside the wheel for uvx.
+[tool.hatch.build.targets.wheel.force-include]
+"suites" = "gguf_preflight/suites"
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "suites", "tests", "README.md", "LICENSE", "pyproject.toml"]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "respx>=0.23.1",
+    "types-pyyaml>=6.0.12.20261122",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]

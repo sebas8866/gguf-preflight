@@ -1,0 +1,37 @@
+{
+ "id": "chatcmpl-653",
+ "object": "chat.completion",
+ "created": 1795378059,
+ "model": "qwen3:8b",
+ "system_fingerprint": "fp_ollama",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "",
+    "reasoning": "Okay, the user is asking for the weather",
+    "tool_calls": [
+     {
+      "id": "call_r7qwqcvu",
+      "index": 0,
+      "type": "function",
+      "function": {
+       "name": "get_weather",
+       "arguments": "{\"city\":\"Paris\"}"
+      }
+     }
+    ]
+   },
+   "finish_reason": "tool_calls"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 149,
+  "prompt_tokens_details": {
+   "cached_tokens": 1
+  },
+  "completion_tokens": 110,
+  "total_tokens": 259
+ }
+}

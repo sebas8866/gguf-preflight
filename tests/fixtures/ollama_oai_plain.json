@@ -1,0 +1,26 @@
+{
+ "id": "chatcmpl-577",
+ "object": "chat.completion",
+ "created": 1795378044,
+ "model": "qwen3:8b",
+ "system_fingerprint": "fp_ollama",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "pong /",
+    "reasoning": "Okay, the user wants me to reply with ex"
+   },
+   "finish_reason": "length"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 15,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens": 120,
+  "total_tokens": 135
+ }
+}

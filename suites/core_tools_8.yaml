@@ -1,0 +1,170 @@
+id: core_tools_8
+kind: tools
+version: 1
+description: Strict tool-calling tasks checked for tool choice, schema, and exact arguments.
+max_tokens: 200
+warn_below: 0.85
+fail_below: 0.6
+system: >-
+  You are a coding agent. When a tool is needed, call exactly one tool with exactly the requested
+  arguments. Never call a tool the user did not need. If no tool is needed, answer in plain text.
+tasks:
+  - id: tools_01_single_arg
+    prompt: Read the file src/main.py.
+    tools:
+      - name: read_file
+        description: Read a text file.
+        parameters:
+          type: object
+          properties:
+            path: {type: string}
+          required: [path]
+          additionalProperties: false
+    expect:
+      tool: read_file
+      args: {path: src/main.py}
+
+  - id: tools_02_typed_args
+    prompt: Show lines 10 through 25 of app/server.py, with line numbers turned on.
+    tools:
+      - name: read_lines
+        description: Read a range of lines from a file.
+        parameters:
+          type: object
+          properties:
+            path: {type: string}
+            start: {type: integer, minimum: 1}
+            end: {type: integer, minimum: 1}
+            numbered: {type: boolean}
+          required: [path, start, end, numbered]
+          additionalProperties: false
+    expect:
+      tool: read_lines
+      args: {path: app/server.py, start: 10, end: 25, numbered: true}
+
+  - id: tools_03_enum
+    prompt: Set the log level to warning.
+    tools:
+      - name: set_log_level
+        description: Change the application log level.
+        parameters:
+          type: object
+          properties:
+            level:
+              type: string
+              enum: [debug, info, warning, error]
+          required: [level]
+          additionalProperties: false
+    expect:
+      tool: set_log_level
+      args: {level: warning}
+
+  - id: tools_04_array
+    prompt: Stage these files for commit, in this order - README.md, setup.py, tests/test_a.py.
+    tools:
+      - name: git_add
+        description: Stage files for commit.
+        parameters:
+          type: object
+          properties:
+            files:
+              type: array
+              items: {type: string}
+              minItems: 1
+          required: [files]
+          additionalProperties: false
+    expect:
+      tool: git_add
+      args:
+        files: [README.md, setup.py, tests/test_a.py]
+
+  - id: tools_05_nested
+    prompt: >-
+      Create a GitHub-style issue titled "Fix login" with priority 2 and the labels bug and auth.
+    tools:
+      - name: create_issue
+        description: Create an issue.
+        parameters:
+          type: object
+          properties:
+            title: {type: string}
+            meta:
+              type: object
+              properties:
+                priority: {type: integer, minimum: 1, maximum: 5}
+                labels:
+                  type: array
+                  items: {type: string}
+              required: [priority, labels]
+              additionalProperties: false
+          required: [title, meta]
+          additionalProperties: false
+    expect:
+      tool: create_issue
+      args:
+        title: Fix login
+        meta: {priority: 2, labels: [bug, auth]}
+
+  - id: tools_06_choose_tool
+    prompt: Search the codebase for the text TODO_REMOVE.
+    tools: &search_tools
+      - name: read_file
+        description: Read one known file by path.
+        parameters:
+          type: object
+          properties:
+            path: {type: string}
+          required: [path]
+      - name: search_code
+        description: Search all files for a text pattern.
+        parameters:
+          type: object
+          properties:
+            pattern: {type: string}
+          required: [pattern]
+      - name: run_tests
+        description: Run the test suite.
+        parameters:
+          type: object
+          properties: {}
+    expect:
+      tool: search_code
+      args: {pattern: TODO_REMOVE}
+    forbidden: [read_file, run_tests]
+
+  - id: tools_07_forbidden_destructive
+    prompt: List the files in the build directory. Do not change anything.
+    tools:
+      - name: list_dir
+        description: List a directory.
+        parameters:
+          type: object
+          properties:
+            path: {type: string}
+          required: [path]
+      - name: delete_path
+        description: Permanently delete a file or directory.
+        parameters:
+          type: object
+          properties:
+            path: {type: string}
+          required: [path]
+    expect:
+      tool: list_dir
+      args: {path: build}
+    forbidden: [delete_path]
+
+  - id: tools_08_no_tool_needed
+    prompt: In Python, what keyword defines a function? Answer with the keyword only.
+    tools:
+      - name: delete_path
+        description: Permanently delete a file or directory.
+        parameters:
+          type: object
+          properties:
+            path: {type: string}
+          required: [path]
+    expect:
+      tool: null
+      text_matches: '(?i)\bdef\b'
+    forbidden: [delete_path]

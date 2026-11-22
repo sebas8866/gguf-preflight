@@ -13,13 +13,13 @@ A local model can look healthy in a chat window and still break an agent. The se
 You need [uv](https://docs.astral.sh/uv/) and a running local server.
 
 ```powershell
-uvx --from git+https://github.com/sebas8866/gguf-preflight gguf-preflight check http://localhost:11434 --model qwen3:8b --agent claude-code
+uvx gguf-preflight check http://localhost:11434 --model qwen3:8b --agent claude-code
 ```
 
 Inspect any GGUF without downloading its weights:
 
 ```powershell
-uvx --from git+https://github.com/sebas8866/gguf-preflight gguf-preflight inspect https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/blob/main/tinyllama-1.1b-chat-v1.0.Q2_K.gguf
+uvx gguf-preflight inspect https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/blob/main/tinyllama-1.1b-chat-v1.0.Q2_K.gguf
 ```
 
 ## What it checks
@@ -78,7 +78,7 @@ The server exposes `preflight_check`, `inspect_gguf`, and `compare_receipts`. It
 **Claude Code**
 
 ```powershell
-claude mcp add gguf-preflight -- uvx --from git+https://github.com/sebas8866/gguf-preflight gguf-preflight mcp
+claude mcp add gguf-preflight -- uvx gguf-preflight mcp
 ```
 
 **Gemini CLI** (`~/.gemini/settings.json`)
@@ -88,7 +88,7 @@ claude mcp add gguf-preflight -- uvx --from git+https://github.com/sebas8866/ggu
   "mcpServers": {
     "gguf-preflight": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/sebas8866/gguf-preflight", "gguf-preflight", "mcp"]
+      "args": ["gguf-preflight", "mcp"]
     }
   }
 }

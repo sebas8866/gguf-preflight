@@ -49,6 +49,8 @@ _LEAK_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _CONTEXT_ERROR = re.compile(r"context|exceed|too long|too many tokens", re.IGNORECASE)
+_JINJA_REQUIRED = re.compile(r"requires\s+(?:the\s+)?--jinja", re.IGNORECASE)
+TEMPLATE_DISABLED_CHECK = "tool_template_disabled"
 
 PROBE_TOOL = ToolSpec(
     name="record_value",
@@ -301,8 +303,23 @@ def probe_context_canary(
     )
 
 
+def is_template_disabled_error(error: str | None) -> bool:
+    """True when llama-server refused a request because it was started without --jinja."""
+    return bool(error and _JINJA_REQUIRED.search(error))
+
+
 def classify_tool_result(result: ChatResult, mode: str) -> Finding | None:
     """Classify one tool-call response. Returns None when the call is valid."""
+    # This arrives as HTTP 500, but it is a startup setting and not a server crash.
+    if is_template_disabled_error(result.error):
+        return _finding(
+            TEMPLATE_DISABLED_CHECK,
+            Severity.FAIL,
+            FailureCode.WIRE_BUG,
+            f"{mode}: the server rejected tools because it was started without --jinja.",
+            mode=mode,
+            status_code=result.status_code,
+        )
     if result.server_failed:
         return _finding(
             "tool_probe_server_failed",

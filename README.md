@@ -123,7 +123,13 @@ Live runs used Windows 11, Ollama 0.40.12, an 8 GB RTX 5060, and an 8B Q4_K_M mo
 
 Run time depends mostly on generation speed, so slower or memory-constrained GPUs take several minutes.
 
-**Not live-tested yet:** llama-server and LM Studio (covered by mocked HTTP tests only), Linux, and macOS.
+We also ran a real fault-injection matrix on the same PC with Ollama and its bundled llama-server (`b1-5320c87ff`). It covered small context, partial and CPU-only offload, prompt cache off, `--no-jinja`, memory pressure, and damaged GGUF metadata, on 0.6B to 8B models.
+
+- 55 of 59 runs showed the fault they were built to test. The other 4 did not, so they are not counted.
+- With a healthy setup, an 8B Q4_K_M model on llama-server got `GO` in both repeats: code 8/10, tools 8/8, context 4/4, and 37/37 layers on the GPU.
+- All 6 `--no-jinja` runs now report the missing flag and the exact fix. Before 0.1.1, this was misreported as a bad quant.
+
+**Not live-tested yet:** LM Studio (covered by mocked HTTP tests only), Linux, and macOS.
 
 ## Development
 

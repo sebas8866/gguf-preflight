@@ -1,6 +1,6 @@
 [project]
 name = "gguf-preflight"
-version = "0.1.0"
+version = "0.1.1"
 description = "Deterministic preflight checks for local GGUF inference stacks before you connect an AI coding agent."
 readme = "README.md"
 license = "MIT"

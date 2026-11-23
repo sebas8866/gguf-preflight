@@ -248,6 +248,20 @@ RULES["runtime_out_of_memory"] = {
     ANY: FixTemplate("Free GPU memory or lower the context", _OOM_WHY, ("nvidia-smi",)),
 }
 
+_JINJA_WHY = (
+    "This llama-server was started without --jinja, so it rejects every request that "
+    "includes tools. Coding agents need those requests."
+)
+RULES["tool_template_disabled"] = {
+    "llama_server": FixTemplate(
+        "Restart llama-server with --jinja",
+        _JINJA_WHY,
+        ("llama-server -m <model.gguf> --jinja",),
+        LLAMA_SERVER_DOCS,
+    ),
+    ANY: FixTemplate("Enable Jinja chat templates on the server", _JINJA_WHY),
+}
+
 _LLAMA_TOOL_FIX = RULES["tool_call_plaintext_leak"]
 for _check in (
     "tool_call_empty_response",

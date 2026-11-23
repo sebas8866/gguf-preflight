@@ -33,7 +33,9 @@ from gguf_preflight.probes.agent_smoke import run_agent_smoke
 from gguf_preflight.probes.speed_probe import DEFAULT_SPEED_DEPTHS, run_speed_probe
 from gguf_preflight.probes.wire_probe import (
     DEFAULT_DEPTHS,
+    TEMPLATE_DISABLED_CHECK,
     check_agent_context,
+    is_template_disabled_error,
     run_wire_probes,
 )
 from gguf_preflight.registry.receipt import all_findings, decide_verdict, failure_codes
@@ -43,6 +45,18 @@ DEEP_DEPTH = 16000
 # Leaves room for the template, the question and the reply inside the loaded context.
 SPEED_CONTEXT_MARGIN = 0.9
 _OUT_OF_MEMORY = re.compile(r"out of memory|\boom\b|failed to allocate", re.IGNORECASE)
+# Without --jinja the chat template differs, so these say nothing about the model.
+_TEMPLATE_CONFOUNDED_CHECKS = frozenset(
+    {
+        "canary_recall_failed",
+        "smoke_code_collapse",
+        "smoke_code_low",
+        "smoke_tools_collapse",
+        "smoke_tools_low",
+        "smoke_context_collapse",
+        "smoke_context_low",
+    }
+)
 Status = Callable[[str], None]
 
 
@@ -110,6 +124,7 @@ def _guarded(name: str, probe: Callable[[], list[ProbeResult]]) -> list[ProbeRes
 
 def _runtime_health(errors: list[str]) -> ProbeResult | None:
     """Report server crashes separately, since they are not model or wire defects."""
+    errors = [error for error in errors if not is_template_disabled_error(error)]
     if not errors:
         return None
     out_of_memory = any(_OUT_OF_MEMORY.search(error) for error in errors)
@@ -130,6 +145,41 @@ def _runtime_health(errors: list[str]) -> ProbeResult | None:
         summary=message,
         findings=[finding],
     )
+
+
+def _discount_template_confounded(results: list[ProbeResult]) -> list[ProbeResult]:
+    """Keep model-quality scores on the receipt, but do not blame the model for --jinja."""
+    if not any(finding.check == TEMPLATE_DISABLED_CHECK for finding in all_findings(results)):
+        return results
+    updated: list[ProbeResult] = []
+    for result in results:
+        if not any(finding.check in _TEMPLATE_CONFOUNDED_CHECKS for finding in result.findings):
+            updated.append(result)
+            continue
+        findings = [
+            finding.model_copy(
+                update={
+                    "severity": Severity.INFO,
+                    "code": None,
+                    "message": f"Not scored because --jinja is off. {finding.message}",
+                    "evidence": {**finding.evidence, "confounded_by": TEMPLATE_DISABLED_CHECK},
+                }
+            )
+            if finding.check in _TEMPLATE_CONFOUNDED_CHECKS
+            else finding
+            for finding in result.findings
+        ]
+        real = [finding for finding in findings if finding.severity is not Severity.INFO]
+        updated.append(
+            result.model_copy(
+                update={
+                    "findings": findings,
+                    "status": status_from_findings(real) if real else ProbeStatus.SKIP,
+                    "summary": f"Not scored because --jinja is off. {result.summary}",
+                }
+            )
+        )
+    return updated
 
 
 def _speed(
@@ -209,6 +259,7 @@ def run_preflight(
         if owned:
             client_http.close()
 
+    results = _discount_template_confounded(results)
     return PreflightReceipt(
         tool_version=__version__,
         target_agent=agent,

@@ -189,13 +189,18 @@ def probe_prefix_cache(client: LlmClient, nonce: str) -> ProbeResult:
     )
 
 
-def _calibrate_tokens_per_line(client: LlmClient) -> float:
+def _calibrate_tokens_per_line(client: LlmClient, nonce: str) -> float:
+    # Both prompts start with unique text, so a warm cache cannot shrink the reported counts.
     base = client.chat(
-        ChatRequest(system="x", messages=[{"role": "user", "content": "ok"}], max_tokens=1)
+        ChatRequest(
+            system=f"base {nonce}",
+            messages=[{"role": "user", "content": "ok"}],
+            max_tokens=1,
+        )
     )
     sample = client.chat(
         ChatRequest(
-            system=filler_lines(CALIBRATION_LINES, "calibration"),
+            system=f"sample {nonce}\n{filler_lines(CALIBRATION_LINES, 'calibration')}",
             messages=[{"role": "user", "content": "ok"}],
             max_tokens=1,
         )
@@ -216,7 +221,7 @@ def probe_context_canary(
     """Place a canary at the start of the prompt and ask for it from the far end."""
     started = time.perf_counter()
     findings: list[Finding] = []
-    tokens_per_line = _calibrate_tokens_per_line(client)
+    tokens_per_line = _calibrate_tokens_per_line(client, nonce)
     results: dict[str, Any] = {}
     for depth in sorted(depths):
         digest = hashlib.sha256(f"{nonce}:{depth}".encode()).hexdigest()[:10].upper()
